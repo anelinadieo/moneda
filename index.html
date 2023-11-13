@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambio de Valor de Moneda</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <div id="content-container">
+            <h1>Cambio de Valor de Moneda</h1>
+
+            <div class="container" id="input-container">
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" id="cantidad" min="0" placeholder="Ingrese la cantidad">
+                
+                <label for="monedaBase">Moneda base:</label>
+                <select id="monedaBase">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="JPY">JPY</option>
+                    <option value="MXN">MXN</option>
+                    <!-- Agrega más opciones según tus necesidades -->
+                </select>
+
+                <button onclick="calcularCambio()">Calcular</button>
+            </div>
+
+            <div class="container" id="resultados">
+                <div class="column">
+                    <h2>CAMBIO DE MONEDA</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>País</th>
+                                <th>Cambio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaResultados1">
+                            <!-- Aquí se mostrarán los resultados de la columna 1 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="column">
+                    <h2>:</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>País</th>
+                                <th>Cambio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaResultados2">
+                            <!-- Aquí se mostrarán los resultados de la columna 2 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="grafico-container">
+            <canvas id="grafico" width="400" height="300"></canvas>
+        </div>
+    </div>
+
+    <script>async function calcularCambio() {
+        var cantidad = parseFloat(document.getElementById('cantidad').value);
+        var monedaBase = document.getElementById('monedaBase').value;
+      
+        var url = `https://api.frankfurter.app/latest?from=${monedaBase}`;
+      
+        try {
+            var response = await fetch(url);
+            var data = await response.json();
+      
+            var tasasCambio = data.rates;
+      
+            mostrarResultados(tasasCambio, cantidad);
+            mostrarGrafico(Object.keys(tasasCambio), Object.values(tasasCambio), monedaBase);
+        } catch (error) {
+            console.error('Error al obtener datos de tasas de cambio:', error);
+        }
+      }
+      
+      function mostrarResultados(tasasCambio, cantidad) {
+        var tablaResultados1 = document.getElementById('tablaResultados1');
+        var tablaResultados2 = document.getElementById('tablaResultados2');
+        tablaResultados1.innerHTML = ''; // Limpiar resultados anteriores
+        tablaResultados2.innerHTML = ''; // Limpiar resultados anteriores
+      
+        var paises = Object.keys(tasasCambio);
+        var totalPaises = paises.length;
+      
+        for (var i = 0; i < totalPaises; i++) {
+            var pais = paises[i];
+            var cambio = cantidad * tasasCambio[pais];
+      
+            var fila = `<tr>
+                            <td>${pais}</td>
+                            <td>${cambio.toFixed(2)}</td>
+                        </tr>`;
+      
+            if (i < totalPaises / 2) {
+                tablaResultados1.innerHTML += fila;
+            } else {
+                tablaResultados2.innerHTML += fila;
+            }
+        }
+      }
+      
+      function mostrarGrafico(paises, tasasCambio, monedaBase) {
+        var ctx = document.getElementById('grafico').getContext('2d');
+      
+        var datos = {
+            labels: paises,
+            datasets: [{
+                label: `Cambio de ${monedaBase}`,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                data: tasasCambio,
+            }]
+        };
+      
+        var opciones = {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        };
+      
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: datos,
+            options: opciones
+        });
+      }</script>
+      <style>body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f8f8f8;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #main-container {
+        display: flex;
+        justify-content: space-between;
+        width: 80%;
+        max-width: 1200px;
+        margin: 20px auto;
+    }
+    
+    #content-container {
+        width: 60%;
+    }
+    
+    #grafico-container {
+        width: 35%;
+    }
+    
+    /* Resto del código CSS permanece igual */
+    
+    
+    h1 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+    
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        width: 80%;
+        max-width: 800px;
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-sizing: border-box;
+    }
+    
+    label {
+        margin-bottom: 8px;
+        display: block;
+        font-weight: bold;
+    }
+    
+    input, select, button {
+        margin-bottom: 16px;
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    button:hover {
+        background-color: #45a049;
+    }
+    
+    #resultados {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    
+    .column {
+        flex: 48%;
+        margin-bottom: 20px;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    #grafico {
+        max-width: 400px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    </style>
+</body>
+</html>
